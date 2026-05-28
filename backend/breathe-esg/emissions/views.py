@@ -10,6 +10,8 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+
+
 from .models import (
     Company,
     DataSource,
@@ -184,45 +186,62 @@ def ingest_csv(
     )
 
 
-class SAPUploadView(APIView):
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import pandas as pd
 
+from .models import EmissionRecord
+
+
+class SAPUploadView(APIView):
     def post(self, request):
 
-        return ingest_csv(
-            request,
-            source_type="SAP",
-            scope="SCOPE_1",
+        file = request.FILES.get("uploaded_file")
 
-            category_resolver=lambda row:
-                first_value(
-                    row,
-                    "category",
-                    "material",
-                    "description",
-                ) or "Fuel",
+        if not file:
+            return Response(
+                {"error": "No file uploaded"},
+                status=400
+            )
 
-            quantity_keys=(
-                "quantity",
-                "qty",
-                "amount",
-            ),
+        try:
+            df = pd.read_csv(file)
 
-            unit_keys=(
-                "unit",
-                "uom",
-            ),
+            created = []
 
-            date_keys=(
-                "date",
-                "activity_date",
-            ),
+            for _, row in df.iterrows():
 
-            normalized_unit="liters",
+                quantity = float(
+                    row.get("quantity", 0)
+                )
 
-            suspicious_threshold=10000,
+                suspicious = quantity > 10000
 
-            success_message="SAP upload successful",
-        )
+                record = EmissionRecord.objects.create(
+                    scope=row.get("scope", "SCOPE_1"),
+                    category=row.get("category", "Fuel"),
+                    quantity=quantity,
+                    normalized_unit=row.get("unit", "liters"),
+                    review_status="PENDING",
+                    suspicious_flag=suspicious,
+                )
+
+                created.append(record.id)
+
+            return Response(
+                {
+                    "message": "Upload successful",
+                    "created_records": created,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=500
+            )
 
 
 class UtilityUploadView(APIView):
