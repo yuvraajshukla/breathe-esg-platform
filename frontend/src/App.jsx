@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -17,7 +18,13 @@ function App() {
         `${API_BASE}/api/records/`
       );
 
-      setRecords(response.data);
+      if (Array.isArray(response.data)) {
+        setRecords(response.data);
+      } else if (response.data.records) {
+        setRecords(response.data.records);
+      } else {
+        setRecords([]);
+      }
     } catch (error) {
       console.error(error);
       setMessage("Failed to load records.");
@@ -30,9 +37,14 @@ function App() {
         `${API_BASE}/api/raw-records/failed/`
       );
 
-      setFailedRows(response.data);
+      if (Array.isArray(response.data)) {
+        setFailedRows(response.data);
+      } else {
+        setFailedRows([]);
+      }
     } catch (error) {
       console.error(error);
+      setFailedRows([]);
     }
   };
 
@@ -41,47 +53,57 @@ function App() {
     fetchFailedRows();
   }, []);
 
-const uploadToEndpoint = async (file) => {
-  const formData = new FormData();
+  const uploadToEndpoint = async (file) => {
+    const formData = new FormData();
 
-  formData.append("uploaded_file", file);
-  formData.append("uploaded_by", "Yuvraaj");
+    formData.append("uploaded_file", file);
+    formData.append("uploaded_by", "Yuvraaj");
 
-  // IMPORTANT FIX
-  formData.append("company", "Breathe ESG");
-  formData.append("source_type", sourceType);
+    // IMPORTANT FIX
+    formData.append("company", 1);
 
-  const endpointMap = {
-    SAP: "sap",
-    UTILITY: "utility",
-    TRAVEL: "travel",
+    formData.append(
+      "source_type",
+      sourceType
+    );
+
+    const endpointMap = {
+      SAP: "sap",
+      UTILITY: "utility",
+      TRAVEL: "travel",
+    };
+
+    const endpoint =
+      endpointMap[sourceType];
+
+    return axios.post(
+      `${API_BASE}/api/upload/${endpoint}/`,
+      formData,
+      {
+        headers: {
+          "Content-Type":
+            "multipart/form-data",
+        },
+      }
+    );
   };
 
-  const endpoint = endpointMap[sourceType];
-
-  return axios.post(
-    `${API_BASE}/api/upload/${endpoint}/`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
-};
-
-  const handleFileUpload = async (event) => {
+  const handleFileUpload = async (
+    event
+  ) => {
     const file = event.target.files[0];
 
     if (!file) return;
 
     try {
       setUploading(true);
+
       setMessage("Uploading file...");
 
       await uploadToEndpoint(file);
 
       await fetchRecords();
+
       await fetchFailedRows();
 
       setMessage(
@@ -92,7 +114,9 @@ const uploadToEndpoint = async (file) => {
 
       if (error.response?.data) {
         setMessage(
-          JSON.stringify(error.response.data)
+          JSON.stringify(
+            error.response.data
+          )
         );
       } else {
         setMessage(
@@ -101,6 +125,7 @@ const uploadToEndpoint = async (file) => {
       }
     } finally {
       setUploading(false);
+
       event.target.value = "";
     }
   };
@@ -108,13 +133,14 @@ const uploadToEndpoint = async (file) => {
   const approveRecord = async (id) => {
     try {
       await axios.patch(
-        `${API_BASE}/api/records/${id}/approve/`,
+        `${API_BASE}/api/review/${id}/`,
         {
+          review_status: "APPROVED",
           changed_by: "Yuvraaj",
         }
       );
 
-      await fetchRecords();
+      fetchRecords();
     } catch (error) {
       console.error(error);
       setMessage("Approve failed.");
@@ -124,30 +150,39 @@ const uploadToEndpoint = async (file) => {
   const rejectRecord = async (id) => {
     try {
       await axios.patch(
-        `${API_BASE}/api/records/${id}/reject/`,
+        `${API_BASE}/api/review/${id}/`,
         {
+          review_status: "REJECTED",
           changed_by: "Yuvraaj",
         }
       );
 
-      await fetchRecords();
+      fetchRecords();
     } catch (error) {
       console.error(error);
       setMessage("Reject failed.");
     }
   };
 
-  const approvedCount = records.filter(
-    (r) => r.review_status === "APPROVED"
-  ).length;
+  const approvedCount =
+    records.filter(
+      (r) =>
+        r.review_status ===
+        "APPROVED"
+    ).length;
 
-  const pendingCount = records.filter(
-    (r) => r.review_status === "PENDING"
-  ).length;
+  const pendingCount =
+    records.filter(
+      (r) =>
+        r.review_status ===
+        "PENDING"
+    ).length;
 
-  const suspiciousCount = records.filter(
-    (r) => r.suspicious_flag === true
-  ).length;
+  const suspiciousCount =
+    records.filter(
+      (r) =>
+        r.suspicious_flag === true
+    ).length;
 
   return (
     <div
@@ -155,7 +190,8 @@ const uploadToEndpoint = async (file) => {
         minHeight: "100vh",
         backgroundColor: "#f4f4f5",
         padding: "24px",
-        fontFamily: "Arial, sans-serif",
+        fontFamily:
+          "Arial, sans-serif",
       }}
     >
       <div
@@ -225,7 +261,8 @@ const uploadToEndpoint = async (file) => {
           <div
             style={{
               display: "flex",
-              justifyContent: "space-between",
+              justifyContent:
+                "space-between",
               alignItems: "center",
               marginBottom: "20px",
               flexWrap: "wrap",
@@ -252,18 +289,25 @@ const uploadToEndpoint = async (file) => {
               <select
                 value={sourceType}
                 onChange={(e) =>
-                  setSourceType(e.target.value)
+                  setSourceType(
+                    e.target.value
+                  )
                 }
                 style={{
                   padding: "12px",
                   borderRadius: "10px",
-                  border: "1px solid #ccc",
+                  border:
+                    "1px solid #ccc",
                 }}
               >
-                <option value="SAP">SAP</option>
+                <option value="SAP">
+                  SAP
+                </option>
+
                 <option value="UTILITY">
                   UTILITY
                 </option>
+
                 <option value="TRAVEL">
                   TRAVEL
                 </option>
@@ -271,10 +315,13 @@ const uploadToEndpoint = async (file) => {
 
               <label
                 style={{
-                  backgroundColor: "black",
+                  backgroundColor:
+                    "black",
                   color: "white",
-                  padding: "12px 18px",
-                  borderRadius: "12px",
+                  padding:
+                    "12px 18px",
+                  borderRadius:
+                    "12px",
                   cursor: "pointer",
                   fontWeight: "700",
                 }}
@@ -287,7 +334,9 @@ const uploadToEndpoint = async (file) => {
                   type="file"
                   accept=".csv"
                   hidden
-                  onChange={handleFileUpload}
+                  onChange={
+                    handleFileUpload
+                  }
                 />
               </label>
             </div>
@@ -299,7 +348,8 @@ const uploadToEndpoint = async (file) => {
                 marginBottom: "16px",
                 padding: "12px",
                 borderRadius: "10px",
-                backgroundColor: "#eef2ff",
+                backgroundColor:
+                  "#eef2ff",
                 color: "#3730a3",
                 fontWeight: "600",
               }}
@@ -308,11 +358,16 @@ const uploadToEndpoint = async (file) => {
             </div>
           )}
 
-          <div style={{ overflowX: "auto" }}>
+          <div
+            style={{
+              overflowX: "auto",
+            }}
+          >
             <table
               style={{
                 width: "100%",
-                borderCollapse: "collapse",
+                borderCollapse:
+                  "collapse",
               }}
             >
               <thead>
@@ -329,74 +384,95 @@ const uploadToEndpoint = async (file) => {
               </thead>
 
               <tbody>
-                {records.map((record) => (
-                  <tr
-                    key={record.id}
-                    style={{
-                      backgroundColor:
-                        record.suspicious_flag
-                          ? "#fff1f2"
-                          : "white",
-                    }}
-                  >
-                    <Td>{record.id}</Td>
-                    <Td>{record.scope}</Td>
-                    <Td>{record.category}</Td>
-                    <Td>{record.quantity}</Td>
-                    <Td>
-                      {record.normalized_unit}
-                    </Td>
+                {records.map(
+                  (record) => (
+                    <tr
+                      key={record.id}
+                      style={{
+                        backgroundColor:
+                          record.suspicious_flag
+                            ? "#fff1f2"
+                            : "white",
+                      }}
+                    >
+                      <Td>
+                        {record.id}
+                      </Td>
 
-                    <Td>
-                      <StatusPill
-                        status={
-                          record.review_status
+                      <Td>
+                        {record.scope}
+                      </Td>
+
+                      <Td>
+                        {
+                          record.category
                         }
-                      />
-                    </Td>
+                      </Td>
 
-                    <Td>
-                      {record.suspicious_flag
-                        ? "⚠ Suspicious"
-                        : "✓ Normal"}
-                    </Td>
+                      <Td>
+                        {
+                          record.quantity
+                        }
+                      </Td>
 
-                    <Td>
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "10px",
-                        }}
-                      >
-                        <button
-                          style={buttonStyle(
-                            "#22c55e"
-                          )}
-                          onClick={() =>
-                            approveRecord(
-                              record.id
-                            )
+                      <Td>
+                        {
+                          record.normalized_unit
+                        }
+                      </Td>
+
+                      <Td>
+                        <StatusPill
+                          status={
+                            record.review_status
                           }
-                        >
-                          Approve
-                        </button>
+                        />
+                      </Td>
 
-                        <button
-                          style={buttonStyle(
-                            "#ef4444"
-                          )}
-                          onClick={() =>
-                            rejectRecord(
-                              record.id
-                            )
-                          }
+                      <Td>
+                        {record.suspicious_flag
+                          ? "⚠ Suspicious"
+                          : "✓ Normal"}
+                      </Td>
+
+                      <Td>
+                        <div
+                          style={{
+                            display:
+                              "flex",
+                            gap: "10px",
+                          }}
                         >
-                          Reject
-                        </button>
-                      </div>
-                    </Td>
-                  </tr>
-                ))}
+                          <button
+                            style={buttonStyle(
+                              "#22c55e"
+                            )}
+                            onClick={() =>
+                              approveRecord(
+                                record.id
+                              )
+                            }
+                          >
+                            Approve
+                          </button>
+
+                          <button
+                            style={buttonStyle(
+                              "#ef4444"
+                            )}
+                            onClick={() =>
+                              rejectRecord(
+                                record.id
+                              )
+                            }
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </Td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>
@@ -404,7 +480,8 @@ const uploadToEndpoint = async (file) => {
 
         <div
           style={{
-            backgroundColor: "white",
+            backgroundColor:
+              "white",
             borderRadius: "22px",
             padding: "28px",
             marginTop: "24px",
@@ -422,16 +499,26 @@ const uploadToEndpoint = async (file) => {
             Failed Rows
           </h2>
 
-          {failedRows.length === 0 ? (
-            <div style={{ color: "#6b7280" }}>
+          {failedRows.length ===
+          0 ? (
+            <div
+              style={{
+                color: "#6b7280",
+              }}
+            >
               No failed rows yet.
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <div
+              style={{
+                overflowX: "auto",
+              }}
+            >
               <table
                 style={{
                   width: "100%",
-                  borderCollapse: "collapse",
+                  borderCollapse:
+                    "collapse",
                 }}
               >
                 <thead>
@@ -443,18 +530,28 @@ const uploadToEndpoint = async (file) => {
                 </thead>
 
                 <tbody>
-                  {failedRows.map((row) => (
-                    <tr key={row.id}>
-                      <Td>{row.id}</Td>
-                      <Td>
-                        {row.processing_status}
-                      </Td>
-                      <Td>
-                        {row.error_message ||
-                          "—"}
-                      </Td>
-                    </tr>
-                  ))}
+                  {failedRows.map(
+                    (row) => (
+                      <tr
+                        key={row.id}
+                      >
+                        <Td>
+                          {row.id}
+                        </Td>
+
+                        <Td>
+                          {
+                            row.processing_status
+                          }
+                        </Td>
+
+                        <Td>
+                          {row.error_message ||
+                            "—"}
+                        </Td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             </div>
@@ -502,7 +599,8 @@ function StatCard({
   return (
     <div
       style={{
-        backgroundColor: style.bg,
+        backgroundColor:
+          style.bg,
         borderRadius: "18px",
         padding: "18px",
       }}
@@ -531,7 +629,9 @@ function StatCard({
   );
 }
 
-function StatusPill({ status }) {
+function StatusPill({
+  status,
+}) {
   const map = {
     APPROVED: {
       bg: "#d1fae5",
@@ -549,15 +649,20 @@ function StatusPill({ status }) {
     },
   };
 
-  const s = map[status] || map.PENDING;
+  const s =
+    map[status] ||
+    map.PENDING;
 
   return (
     <span
       style={{
-        backgroundColor: s.bg,
+        backgroundColor:
+          s.bg,
         color: s.color,
-        padding: "8px 14px",
-        borderRadius: "999px",
+        padding:
+          "8px 14px",
+        borderRadius:
+          "999px",
         fontWeight: "800",
         fontSize: "13px",
       }}
@@ -567,7 +672,9 @@ function StatusPill({ status }) {
   );
 }
 
-function Th({ children }) {
+function Th({
+  children,
+}) {
   return (
     <th
       style={{
@@ -580,7 +687,9 @@ function Th({ children }) {
   );
 }
 
-function Td({ children }) {
+function Td({
+  children,
+}) {
   return (
     <td
       style={{
@@ -597,11 +706,11 @@ function buttonStyle(bg) {
     backgroundColor: bg,
     color: "white",
     border: "none",
-    padding: "10px 16px",
+    padding:
+      "10px 16px",
     borderRadius: "8px",
     cursor: "pointer",
     fontWeight: "700",
   };
 }
-
 export default App;
