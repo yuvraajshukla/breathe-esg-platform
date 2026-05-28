@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -17,6 +16,8 @@ function App() {
       const response = await axios.get(
         `${API_BASE}/api/records/`
       );
+
+      console.log(response.data);
 
       if (Array.isArray(response.data)) {
         setRecords(response.data);
@@ -57,15 +58,12 @@ function App() {
     const formData = new FormData();
 
     formData.append("uploaded_file", file);
+
     formData.append("uploaded_by", "Yuvraaj");
 
-    // IMPORTANT FIX
-    formData.append("company", 1);
+    formData.append("company", "1");
 
-    formData.append(
-      "source_type",
-      sourceType
-    );
+    formData.append("source_type", sourceType);
 
     const endpointMap = {
       SAP: "sap",
@@ -120,7 +118,7 @@ function App() {
         );
       } else {
         setMessage(
-          "Upload failed. Backend may still be waking up."
+          "Upload failed."
         );
       }
     } finally {
@@ -167,14 +165,16 @@ function App() {
   const approvedCount =
     records.filter(
       (r) =>
-        r.review_status ===
+        (r.review_status ||
+          "PENDING") ===
         "APPROVED"
     ).length;
 
   const pendingCount =
     records.filter(
       (r) =>
-        r.review_status ===
+        (r.review_status ||
+          "PENDING") ===
         "PENDING"
     ).length;
 
@@ -384,93 +384,104 @@ function App() {
               </thead>
 
               <tbody>
-                {records.map(
-                  (record) => (
-                    <tr
-                      key={record.id}
-                      style={{
-                        backgroundColor:
-                          record.suspicious_flag
-                            ? "#fff1f2"
-                            : "white",
-                      }}
-                    >
-                      <Td>
-                        {record.id}
-                      </Td>
+                {records.length === 0 ? (
+                  <tr>
+                    <Td colSpan="8">
+                      No records found.
+                    </Td>
+                  </tr>
+                ) : (
+                  records.map(
+                    (record) => (
+                      <tr
+                        key={record.id}
+                        style={{
+                          backgroundColor:
+                            record.suspicious_flag
+                              ? "#fff1f2"
+                              : "white",
+                        }}
+                      >
+                        <Td>
+                          {record.id}
+                        </Td>
 
-                      <Td>
-                        {record.scope}
-                      </Td>
+                        <Td>
+                          {record.scope ||
+                            record.emission_scope ||
+                            "-"}
+                        </Td>
 
-                      <Td>
-                        {
-                          record.category
-                        }
-                      </Td>
+                        <Td>
+                          {record.category ||
+                            record.emission_category ||
+                            "-"}
+                        </Td>
 
-                      <Td>
-                        {
-                          record.quantity
-                        }
-                      </Td>
+                        <Td>
+                          {record.quantity ||
+                            record.activity_value ||
+                            "-"}
+                        </Td>
 
-                      <Td>
-                        {
-                          record.normalized_unit
-                        }
-                      </Td>
+                        <Td>
+                          {record.normalized_unit ||
+                            record.unit ||
+                            "-"}
+                        </Td>
 
-                      <Td>
-                        <StatusPill
-                          status={
-                            record.review_status
-                          }
-                        />
-                      </Td>
-
-                      <Td>
-                        {record.suspicious_flag
-                          ? "⚠ Suspicious"
-                          : "✓ Normal"}
-                      </Td>
-
-                      <Td>
-                        <div
-                          style={{
-                            display:
-                              "flex",
-                            gap: "10px",
-                          }}
-                        >
-                          <button
-                            style={buttonStyle(
-                              "#22c55e"
-                            )}
-                            onClick={() =>
-                              approveRecord(
-                                record.id
-                              )
+                        <Td>
+                          <StatusPill
+                            status={
+                              record.review_status ||
+                              "PENDING"
                             }
-                          >
-                            Approve
-                          </button>
+                          />
+                        </Td>
 
-                          <button
-                            style={buttonStyle(
-                              "#ef4444"
-                            )}
-                            onClick={() =>
-                              rejectRecord(
-                                record.id
-                              )
-                            }
+                        <Td>
+                          {record.suspicious_flag
+                            ? "⚠ Suspicious"
+                            : "✓ Normal"}
+                        </Td>
+
+                        <Td>
+                          <div
+                            style={{
+                              display:
+                                "flex",
+                              gap: "10px",
+                            }}
                           >
-                            Reject
-                          </button>
-                        </div>
-                      </Td>
-                    </tr>
+                            <button
+                              style={buttonStyle(
+                                "#22c55e"
+                              )}
+                              onClick={() =>
+                                approveRecord(
+                                  record.id
+                                )
+                              }
+                            >
+                              Approve
+                            </button>
+
+                            <button
+                              style={buttonStyle(
+                                "#ef4444"
+                              )}
+                              onClick={() =>
+                                rejectRecord(
+                                  record.id
+                                )
+                              }
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </Td>
+                      </tr>
+                    )
                   )
                 )}
               </tbody>
@@ -509,52 +520,16 @@ function App() {
               No failed rows yet.
             </div>
           ) : (
-            <div
-              style={{
-                overflowX: "auto",
-              }}
-            >
-              <table
+            failedRows.map((row) => (
+              <div
+                key={row.id}
                 style={{
-                  width: "100%",
-                  borderCollapse:
-                    "collapse",
+                  marginBottom: "10px",
                 }}
               >
-                <thead>
-                  <tr>
-                    <Th>ID</Th>
-                    <Th>Status</Th>
-                    <Th>Error</Th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {failedRows.map(
-                    (row) => (
-                      <tr
-                        key={row.id}
-                      >
-                        <Td>
-                          {row.id}
-                        </Td>
-
-                        <Td>
-                          {
-                            row.processing_status
-                          }
-                        </Td>
-
-                        <Td>
-                          {row.error_message ||
-                            "—"}
-                        </Td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
+                {row.error_message}
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -672,9 +647,7 @@ function StatusPill({
   );
 }
 
-function Th({
-  children,
-}) {
+function Th({ children }) {
   return (
     <th
       style={{
@@ -689,9 +662,11 @@ function Th({
 
 function Td({
   children,
+  colSpan,
 }) {
   return (
     <td
+      colSpan={colSpan}
       style={{
         padding: "16px",
       }}
@@ -713,4 +688,5 @@ function buttonStyle(bg) {
     fontWeight: "700",
   };
 }
+
 export default App;
