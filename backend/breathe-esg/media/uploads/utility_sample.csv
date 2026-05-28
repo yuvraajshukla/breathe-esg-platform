@@ -1,0 +1,4 @@
+facility,meter_id,billing_period,kwh_used,tariff
+Mumbai Office,MTR-882,2026-04,12000,Commercial
+Delhi Plant,MTR-441,2026-04,45000,Industrial
+Bangalore Hub,MTR-771,2026-04,8500,Commercial
