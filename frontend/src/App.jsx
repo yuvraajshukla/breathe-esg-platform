@@ -41,30 +41,34 @@ function App() {
     fetchFailedRows();
   }, []);
 
-  const uploadToEndpoint = async (file) => {
-    const formData = new FormData();
+const uploadToEndpoint = async (file) => {
+  const formData = new FormData();
 
-    formData.append("uploaded_file", file);
-    formData.append("uploaded_by", "Yuvraaj");
+  formData.append("uploaded_file", file);
+  formData.append("uploaded_by", "Yuvraaj");
 
-    const endpointMap = {
-      SAP: "sap",
-      UTILITY: "utility",
-      TRAVEL: "travel",
-    };
+  // IMPORTANT FIX
+  formData.append("company", "Breathe ESG");
+  formData.append("source_type", sourceType);
 
-    const endpoint = endpointMap[sourceType];
-
-    return axios.post(
-      `${API_BASE}/api/upload/${endpoint}/`,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+  const endpointMap = {
+    SAP: "sap",
+    UTILITY: "utility",
+    TRAVEL: "travel",
   };
+
+  const endpoint = endpointMap[sourceType];
+
+  return axios.post(
+    `${API_BASE}/api/upload/${endpoint}/`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+};
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
