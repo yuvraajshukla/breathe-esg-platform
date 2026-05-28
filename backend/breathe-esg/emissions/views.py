@@ -219,15 +219,21 @@ class SAPUploadView(APIView):
                 suspicious = quantity > 10000
 
                 record = EmissionRecord.objects.create(
-                   scope=row.get("scope", "SCOPE_1"),
-                   category=row.get("category", "Fuel"),
-                   quantity=quantity,
-                   normalized_unit=row.get("unit", "liters"),
+    scope=row.get("scope", "SCOPE_1"),
 
-                   activity_date="2026-05-28",
+    category=row.get("category", "Fuel"),
 
-                   review_status="PENDING",
-                   suspicious_flag=suspicious,
+    quantity=quantity,
+
+    normalized_unit=row.get("unit", "liters"),
+
+    activity_date="2026-05-28",
+
+    company_id=1,
+
+    review_status="PENDING",
+
+    suspicious_flag=suspicious,
                 )
 
                 created.append(record.id)
