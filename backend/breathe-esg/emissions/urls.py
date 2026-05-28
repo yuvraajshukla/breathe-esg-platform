@@ -1,5 +1,5 @@
 from django.urls import path
-
+from .views import SAPUploadView
 from .views import (
     SAPUploadView,
     UtilityUploadView,
@@ -9,6 +9,7 @@ from .views import (
     ApproveEmissionView,
     RejectEmissionView,
 )
+
 
 urlpatterns = [
     path("upload/sap/", SAPUploadView.as_view(), name="sap-upload"),
