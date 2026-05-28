@@ -1,4 +1,3 @@
-```jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -93,7 +92,7 @@ function App() {
         );
       } else {
         setMessage(
-          "Upload failed. Backend may still be waking up on Render free tier."
+          "Upload failed. Backend may still be waking up."
         );
       }
     } finally {
@@ -233,6 +232,7 @@ function App() {
               style={{
                 fontSize: "30px",
                 fontWeight: "800",
+                margin: 0,
               }}
             >
               Emission Records
@@ -253,6 +253,7 @@ function App() {
                 style={{
                   padding: "12px",
                   borderRadius: "10px",
+                  border: "1px solid #ccc",
                 }}
               >
                 <option value="SAP">SAP</option>
@@ -395,6 +396,65 @@ function App() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "22px",
+            padding: "28px",
+            marginTop: "24px",
+            boxShadow:
+              "0 2px 18px rgba(0,0,0,0.08)",
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "28px",
+              fontWeight: "800",
+              marginBottom: "18px",
+            }}
+          >
+            Failed Rows
+          </h2>
+
+          {failedRows.length === 0 ? (
+            <div style={{ color: "#6b7280" }}>
+              No failed rows yet.
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                }}
+              >
+                <thead>
+                  <tr>
+                    <Th>ID</Th>
+                    <Th>Status</Th>
+                    <Th>Error</Th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {failedRows.map((row) => (
+                    <tr key={row.id}>
+                      <Td>{row.id}</Td>
+                      <Td>
+                        {row.processing_status}
+                      </Td>
+                      <Td>
+                        {row.error_message ||
+                          "—"}
+                      </Td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -541,4 +601,3 @@ function buttonStyle(bg) {
 }
 
 export default App;
-```
