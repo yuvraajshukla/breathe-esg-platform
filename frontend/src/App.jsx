@@ -10,7 +10,7 @@ function App() {
 
   const fetchRecords = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/records/");
+      const response = await axios.get("https://breathe-esg-platform-yv8f.onrender.com/api/records/");
       setRecords(response.data);
     } catch (error) {
       console.error(error);
@@ -49,7 +49,7 @@ function App() {
     const endpoint = endpointMap[sourceType];
 
     await axios.post(
-      `http://127.0.0.1:8000/api/upload/${endpoint}/`,
+      `https://breathe-esg-platform-yv8f.onrender.com/api/upload/${endpoint}/`,
       formData
     );
   };
@@ -80,7 +80,7 @@ function App() {
   const approveRecord = async (id) => {
     try {
       await axios.patch(
-        `http://127.0.0.1:8000/api/records/${id}/approve/`,
+        `https://breathe-esg-platform-yv8f.onrender.com/api/records/${id}/approve/`,
         { changed_by: "Yuvraaj" }
       );
       await fetchRecords();
@@ -94,7 +94,7 @@ function App() {
   const rejectRecord = async (id) => {
     try {
       await axios.patch(
-        `http://127.0.0.1:8000/api/records/${id}/reject/`,
+        `https://breathe-esg-platform-yv8f.onrender.com/api/records/${id}/reject/`,
         { changed_by: "Yuvraaj" }
       );
       await fetchRecords();
