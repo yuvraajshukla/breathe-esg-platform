@@ -130,3 +130,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.vercel.app",
+]
